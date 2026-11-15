@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: fmt, clippy, tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: System packages (libheif for HEIC support)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config zlib1g-dev libheif-dev libheif-plugin-libde265
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo test --locked
+      # The official image is built without HEIC, so that configuration must stay healthy too.
+      - run: cargo clippy --locked --no-default-features --all-targets -- -D warnings
+      - run: cargo test --locked --no-default-features
+
+  docker:
+    name: image (WITH_HEIC=${{ matrix.heic }}) builds and passes the smoke test
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        heic: ["0", "1"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: frameshuffle:ci
+          build-args: WITH_HEIC=${{ matrix.heic }}
+          cache-from: type=gha,scope=heic${{ matrix.heic }}
+          cache-to: type=gha,mode=max,scope=heic${{ matrix.heic }}
+      - name: Smoke test
+        run: |
+          pip install --quiet pillow pillow-heif
+          python3 scripts/make-test-images.py ci-images --heic
+          docker run -d --name fs -p 8080:8080 -v "$PWD/ci-images:/images:ro" frameshuffle:ci
+          EXPECT_HEIC=${{ matrix.heic }} scripts/smoke-test.sh http://127.0.0.1:8080 || { docker logs fs; exit 1; }
+      - name: The default image must not contain any HEIC/HEVC decoder
+        if: matrix.heic == '0'
+        run: |
+          ! docker run --rm --entrypoint sh frameshuffle:ci -c 'ls /usr/lib/x86_64-linux-gnu /usr/lib/aarch64-linux-gnu 2>/dev/null | grep -Ei "heif|de265"'
+          docker image inspect frameshuffle:ci --format '{{ index .Config.Labels "io.frameshuffle.heic" }}' | grep -qx 0

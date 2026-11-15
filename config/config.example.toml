@@ -1,0 +1,108 @@
+# frameshuffle configuration. Every key is optional; this file shows the defaults you are most
+# likely to change. Mount it at /config/config.toml (or pass --config / FRAMESHUFFLE_CONFIG).
+
+[server]
+bind = "0.0.0.0:8080"
+timezone = "America/Los_Angeles"      # used for client time windows
+# token = "change-me"                 # if set, image endpoints need ?token=... or "Authorization: Bearer ..."
+# admin_token = "change-me-too"       # protects /admin/*, /stats and /metrics
+render_concurrency = 2                # simultaneous image conversions
+
+[library]
+dir = "/images"                       # mounted read-only
+extensions = ["jpg", "jpeg", "png", "webp", "bmp", "heic", "heif"]
+skip_dirs = ["@eaDir", "#recycle", "$RECYCLE.BIN", "lost+found"]   # plus anything starting with '.'
+
+[storage]
+db_path = "/data/frameshuffle.db"
+cache_dir = "/cache"
+cache_max_mb = 2048
+
+[scan]
+on_startup = true                     # incremental: unchanged files are skipped, so restarts are cheap
+threads = 2                           # hashing workers (disk-bound; more rarely helps)
+watch = false                         # true = inotify change detection (local filesystems only)
+watch_debounce_secs = 10
+periodic_minutes = 0                  # >0 = rescan on a timer (use this instead of watch on NFS/SMB)
+
+# ---------------------------------------------------------------------------------------------
+# Image processing is OFF by default: the server only decides *which* image to show next and hands
+# out the original file untouched. FrameOS (or any smart client) does its own sizing, colour
+# handling and dithering. Turn it on for dumb displays that need a ready-made image.
+# ---------------------------------------------------------------------------------------------
+[processing]
+enabled = false         # true = convert every image to the client's profile (sections below)
+# HEIC/HEIF: only in a build made with WITH_HEIC=1 (the published image has no HEIC decoder; see the
+# README). In such a build, and while processing is disabled, HEIC files are transcoded to a full-size
+# JPEG (no resizing, no dithering) because most displays cannot decode HEIC. Set false to serve the
+# raw .heic bytes, or remove "heic"/"heif" from library.extensions to leave those files out entirely.
+convert_heic = true
+heic_quality = 92
+
+# ---------------------------------------------------------------------------------------------
+# Profiles (only used when processing.enabled = true) describe what a display needs. Built in: "e1004", "e1004-dithered", "android-1080p".
+# Defining a profile with the same name replaces the built-in.
+# ---------------------------------------------------------------------------------------------
+
+# reTerminal E1004 mounted landscape, for use with processing.enabled = true. A clean RGB JPEG at
+# exactly the panel size, NOT dithered (FrameOS and similar firmware dither on the device).
+[profiles.e1004]
+width = 1600
+height = 1200
+fit = "blur_pad"        # blur_pad | cover | contain
+max_crop = 0.05         # blur_pad: crop instead of padding when <= 5% of the picture would be lost
+blur_sigma = 6.0
+bg_dim = 0.0            # 0..1, darken the blurred backdrop
+format = "jpeg"
+quality = 90
+contrast = 1.0          # e-paper is dull; try 1.05-1.15 and saturation 1.1-1.3
+saturation = 1.0
+dither = "none"
+
+# For firmware that expects a ready-to-display image: Floyd-Steinberg to the six Spectra 6 colours,
+# written as a 4-bit indexed PNG. `palette` is how the panel really looks (used for matching),
+# `output_palette` is what is written to the file. Calibrate `palette` against your panel.
+# [profiles.e1004-dithered]
+# width = 1600
+# height = 1200
+# format = "png"
+# dither = "floyd_steinberg"
+# palette        = [[25,30,33],[232,232,232],[178,19,24],[18,95,32],[33,64,154],[239,222,68]]
+# output_palette = [[0,0,0],[255,255,255],[255,0,0],[0,255,0],[0,0,255],[255,255,0]]
+
+# ---------------------------------------------------------------------------------------------
+# Clients are identified by ?client=NAME. Unknown names get [default_client] and are created on
+# first use, each with its own shuffle deck.
+# ---------------------------------------------------------------------------------------------
+
+[default_client]
+profile = "e1004"
+interval_secs = 3600    # same image until this has elapsed; 0 = advance on every request
+outside_window = "current"   # current | no_content
+
+[clients.kitchen]
+profile = "e1004"
+interval_secs = 21600   # every 6 hours (the panel takes ~20 s and some battery per refresh)
+# Refresh only 07:00-22:00; outside that the current image is returned and X-Next-Refresh points at 07:00.
+[[clients.kitchen.windows]]
+start = "07:00"
+end = "22:00"
+# Example of a second window with explicit days, crossing midnight:
+# [[clients.kitchen.windows]]
+# days = ["fri", "sat"]
+# start = "22:00"
+# end = "01:00"
+
+[clients.kitchen.filters]
+# orientation = "landscape"       # landscape | portrait | square
+min_width = 1200
+min_height = 800
+# include_paths = ["Family", "Travel/2024"]     # directory prefixes relative to the library root
+exclude_paths = ["Screenshots", "Receipts"]
+# taken_after = "2015-01-01"      # EXIF capture date; files without one never match
+# taken_before = "2027-01-01"
+
+# Sample for the future Android frame:
+# [clients.android]
+# profile = "android-1080p"
+# interval_secs = 60

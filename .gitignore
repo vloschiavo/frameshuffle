@@ -1,0 +1,7 @@
+/target
+.env
+config/config.toml
+ci-images/
+*.db
+*.db-wal
+*.db-shm

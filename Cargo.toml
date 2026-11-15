@@ -1,0 +1,45 @@
+[package]
+name = "frameshuffle"
+version = "0.1.0"
+edition = "2021"
+description = "Local-only shuffled image server for e-paper and other photo frames"
+license = "MIT"
+publish = false
+keywords = ["photo-frame", "e-paper", "image-server", "slideshow"]
+categories = ["multimedia::images", "web-programming::http-server"]
+
+[features]
+default = ["heic"]
+# HEIC/HEIF decoding via the system libheif (needs libheif-dev at build time, libheif1 at runtime)
+heic = ["dep:libheif-rs"]
+
+[dependencies]
+anyhow = "1"
+axum = "0.8"
+blake3 = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+chrono-tz = "0.10"
+fast_image_resize = "5"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "bmp"] }
+kamadak-exif = "0.6"
+libheif-rs = { version = "2", default-features = false, features = ["v1_17"], optional = true }
+notify = "8"
+png = "0.17"
+rand = "0.9"
+rusqlite = { version = "0.37", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "sync", "time", "fs"] }
+toml = "0.9"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+walkdir = "2"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+opt-level = 3
+codegen-units = 16
+lto = "thin"
+strip = true

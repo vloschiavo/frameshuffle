@@ -1,0 +1,52 @@
+# Configure with a .env file (see .env.sample). Quick start:
+#   cp .env.sample .env && $EDITOR .env
+#   docker compose up -d            # builds from source, or: docker compose pull && docker compose up -d
+services:
+  frameshuffle:
+    image: ${FRAMESHUFFLE_IMAGE:-frameshuffle:local}
+    build:
+      context: .
+      args:
+        WITH_HEIC: ${WITH_HEIC:-0}   # 1 = build with HEIC support; see .env.sample
+    container_name: frameshuffle
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDRESS:-0.0.0.0}:${PORT:-8080}:8080"
+    environment:
+      TZ: ${TZ:-UTC}
+      RUST_LOG: ${RUST_LOG:-info}
+      # Empty means "not set": the app ignores empty values and falls back to config.toml / defaults.
+      FRAMESHUFFLE_TOKEN: ${FRAMESHUFFLE_TOKEN:-}
+      FRAMESHUFFLE_ADMIN_TOKEN: ${FRAMESHUFFLE_ADMIN_TOKEN:-}
+      FRAMESHUFFLE_PROCESSING: ${FRAMESHUFFLE_PROCESSING:-}
+      FRAMESHUFFLE_CONVERT_HEIC: ${FRAMESHUFFLE_CONVERT_HEIC:-}
+      FRAMESHUFFLE_HEIC_QUALITY: ${FRAMESHUFFLE_HEIC_QUALITY:-}
+      FRAMESHUFFLE_SCAN_WATCH: ${FRAMESHUFFLE_SCAN_WATCH:-}
+      FRAMESHUFFLE_SCAN_PERIODIC_MINUTES: ${FRAMESHUFFLE_SCAN_PERIODIC_MINUTES:-}
+      FRAMESHUFFLE_SCAN_THREADS: ${FRAMESHUFFLE_SCAN_THREADS:-}
+      FRAMESHUFFLE_DEFAULT_PROFILE: ${FRAMESHUFFLE_DEFAULT_PROFILE:-}
+      FRAMESHUFFLE_DEFAULT_INTERVAL_SECS: ${FRAMESHUFFLE_DEFAULT_INTERVAL_SECS:-}
+      FRAMESHUFFLE_CACHE_MAX_MB: ${FRAMESHUFFLE_CACHE_MAX_MB:-}
+      FRAMESHUFFLE_RENDER_CONCURRENCY: ${FRAMESHUFFLE_RENDER_CONCURRENCY:-}
+    volumes:
+      - ${PHOTOS_DIR:?Set PHOTOS_DIR in .env (see .env.sample)}:/images:ro
+      - ${CONFIG_DIR:-./config}:/config:ro   # optional config.toml lives here
+      - frameshuffle-data:/data              # SQLite: file index, shuffle decks, history
+      - frameshuffle-cache:/cache            # converted images (safe to delete)
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 256M
+        reservations:
+          cpus: '0.5'
+          memory: 64M
+
+volumes:
+  frameshuffle-data:
+  frameshuffle-cache:

@@ -1,0 +1,8 @@
+target
+.git
+.github
+.env
+config
+docs
+ci-images
+*.md
