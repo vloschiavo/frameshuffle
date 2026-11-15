@@ -17,7 +17,7 @@ jobs:
     name: fmt, clippy, tests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: System packages (libheif for HEIC support)
         run: |
           sudo apt-get update
@@ -41,7 +41,7 @@ jobs:
       matrix:
         heic: ["0", "1"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
         with:
