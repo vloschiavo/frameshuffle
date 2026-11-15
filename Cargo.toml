@@ -26,7 +26,7 @@ libheif-rs = { version = "2", default-features = false, features = ["v1_17"], op
 notify = "8"
 png = "0.17"
 rand = "0.9"
-rusqlite = { version = "0.37", features = ["bundled"] }
+rusqlite = { version = "0.42", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "sync", "time", "fs"] }
