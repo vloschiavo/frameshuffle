@@ -1,7 +1,7 @@
 # frameshuffle
 
-[![CI](https://github.com/YOUR_GITHUB_USER/frameshuffle/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GITHUB_USER/frameshuffle/actions/workflows/ci.yml)
-[![Docker Hub](https://img.shields.io/docker/v/YOUR_DOCKERHUB_USER/frameshuffle?label=docker%20hub&sort=semver)](https://hub.docker.com/r/YOUR_DOCKERHUB_USER/frameshuffle)
+[![CI](https://github.com/vloschiavo/frameshuffle/actions/workflows/ci.yml/badge.svg)](https://github.com/vloschiavo/frameshuffle/actions/workflows/ci.yml)
+[![Docker Hub](https://img.shields.io/docker/v/vloschiavo/frameshuffle?label=docker%20hub&sort=semver)](https://hub.docker.com/r/vloschiavo/frameshuffle)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A local-only image server for e-paper displays and other photo frames. Point it at a folder of photos
@@ -31,12 +31,12 @@ been shown**, exact duplicates shown once, new files folded into the current dec
 You need Docker with Compose, and a folder of photos.
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USER/frameshuffle.git && cd frameshuffle
+git clone https://github.com/vloschiavo/frameshuffle.git && cd frameshuffle
 cp .env.sample .env
 $EDITOR .env                     # set PHOTOS_DIR (the only required setting)
 
 # Use the published image ...
-echo 'FRAMESHUFFLE_IMAGE=YOUR_DOCKERHUB_USER/frameshuffle:latest' >> .env
+echo 'FRAMESHUFFLE_IMAGE=vloschiavo/frameshuffle:latest' >> .env
 docker compose pull
 # ... or skip those two lines and compose will build from source.
 
@@ -52,7 +52,7 @@ Without Compose:
 ```bash
 docker run -d --name frameshuffle -p 8080:8080 \
   -v /path/to/photos:/images:ro -v frameshuffle-data:/data -v frameshuffle-cache:/cache \
-  YOUR_DOCKERHUB_USER/frameshuffle:latest
+  vloschiavo/frameshuffle:latest
 ```
 
 ## Configuration
