@@ -24,7 +24,7 @@ image = { version = "0.25", default-features = false, features = ["jpeg", "png",
 kamadak-exif = "0.6"
 libheif-rs = { version = "2", default-features = false, features = ["v1_17"], optional = true }
 notify = "8"
-png = "0.17"
+png = "0.18"
 rand = "0.9"
 rusqlite = { version = "0.37", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
