@@ -10,7 +10,7 @@
 # Ubuntu 24.04 for both stages so the libheif the binary links against at build time is the one
 # present at runtime (1.17.x, which also ships the libde265 plugin HEIC needs).
 
-FROM ubuntu:24.04 AS build
+FROM ubuntu:26.04 AS build
 ARG WITH_HEIC=0
 ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux; \
@@ -35,7 +35,7 @@ RUN set -eux; \
     features=""; if [ "$WITH_HEIC" != "1" ]; then features="--no-default-features"; fi; \
     cargo build --release --locked $features
 
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 ARG VERSION=dev
 ARG WITH_HEIC=0
 LABEL org.opencontainers.image.title="frameshuffle" \
