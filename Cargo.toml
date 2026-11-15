@@ -25,7 +25,7 @@ kamadak-exif = "0.6"
 libheif-rs = { version = "2", default-features = false, features = ["v1_17"], optional = true }
 notify = "8"
 png = "0.17"
-rand = "0.9"
+rand = "0.10"
 rusqlite = { version = "0.37", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
